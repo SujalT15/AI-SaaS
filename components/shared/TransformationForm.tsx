@@ -36,7 +36,7 @@ export const formSchema = z.object({
   publicId: z.string(),
 })
 
-type TransformationTypeKey = keyof typeof transformationTypes
+type TransformationTypeKey = keyof typeof transformationTypes // ✅ Fix applied
 
 interface TransformationFormProps {
   action: 'Add' | 'Update',
@@ -181,7 +181,6 @@ const TransformationForm = ({
 
     let updatedConfig = deepMergeObjects(newTransformation, transformationConfig);
 
-    // Compress logic
     if (type === 'compress') {
       updatedConfig = {
         quality: 'auto:eco',
@@ -189,7 +188,6 @@ const TransformationForm = ({
       };
     }
 
-    // Handle image-to-video via Runway API
     if (type === 'imageToVideo') {
       try {
         const response = await fetch('/api/video', {
@@ -221,7 +219,6 @@ const TransformationForm = ({
       return;
     }
 
-    // For normal Cloudinary transformations
     setTransformationConfig(updatedConfig);
     setNewTransformation(null);
 
@@ -229,7 +226,10 @@ const TransformationForm = ({
   };
 
   useEffect(() => {
-    if (image && (type === 'restore' || type === 'removeBackground' || type === 'compress' || type === 'imageToVideo')) {
+    if (
+      image &&
+      ['restore', 'removeBackground', 'compress', 'imageToVideo'].includes(type)
+    ) {
       setNewTransformation(transformationType.config);
     }
   }, [image, transformationType.config, type]);
