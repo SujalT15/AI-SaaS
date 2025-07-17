@@ -36,8 +36,31 @@ export const formSchema = z.object({
   publicId: z.string(),
 })
 
-const TransformationForm = ({ action, data = null, userId, type, creditBalance, config = null }: TransformationFormProps) => {
+type TransformationTypeKey = keyof typeof transformationTypes
+
+interface TransformationFormProps {
+  action: 'Add' | 'Update',
+  data?: any,
+  userId: string,
+  type: TransformationTypeKey,
+  creditBalance?: number,
+  config?: any
+}
+
+const TransformationForm = ({
+  action,
+  data = null,
+  userId,
+  type,
+  creditBalance,
+  config = null,
+}: TransformationFormProps) => {
   const transformationType = transformationTypes[type];
+
+  if (!transformationType) {
+    throw new Error(`Unknown transformation type: ${type}`);
+  }
+
   const [image, setImage] = useState(data)
   const [newTransformation, setNewTransformation] = useState<Transformations | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
