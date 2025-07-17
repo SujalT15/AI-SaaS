@@ -36,7 +36,13 @@ export const formSchema = z.object({
   publicId: z.string(),
 })
 
-type TransformationTypeKey = keyof typeof transformationTypes // ✅ Fix applied
+type TransformationTypeKey =
+  | 'fill'
+  | 'remove'
+  | 'restore'
+  | 'removeBackground'
+  | 'recolor'
+  | 'compress' // ✅ removed 'imageToVideo'
 
 interface TransformationFormProps {
   action: 'Add' | 'Update',
@@ -86,15 +92,12 @@ const TransformationForm = ({
     setIsSubmitting(true);
 
     if (data || image) {
-      const transformationUrl =
-        type === 'imageToVideo' && image?.transformationURL
-          ? image?.transformationURL
-          : getCldImageUrl({
-              width: image?.width,
-              height: image?.height,
-              src: image?.publicId,
-              ...transformationConfig,
-            });
+      const transformationUrl = getCldImageUrl({
+        width: image?.width,
+        height: image?.height,
+        src: image?.publicId,
+        ...transformationConfig,
+      });
 
       const imageData = {
         title: values.title,
@@ -188,47 +191,17 @@ const TransformationForm = ({
       };
     }
 
-    if (type === 'imageToVideo') {
-      try {
-        const response = await fetch('/api/video', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            imageUrl: image?.secureURL,
-            prompt: form.getValues().prompt,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result?.videoUrl) {
-          setImage((prev: any) => ({
-            ...prev,
-            transformationURL: result.videoUrl,
-          }));
-        }
-      } catch (error) {
-        console.error('Error generating video:', error);
-      }
-
-      setTransformationConfig({});
-      setNewTransformation(null);
-      setIsTransforming(false);
-      return;
-    }
-
     setTransformationConfig(updatedConfig);
     setNewTransformation(null);
 
     startTransition(() => {});
+    setIsTransforming(false);
   };
 
   useEffect(() => {
     if (
       image &&
-      ['restore', 'removeBackground', 'compress', 'imageToVideo'].includes(type)
+      ['restore', 'removeBackground', 'compress'].includes(type)
     ) {
       setNewTransformation(transformationType.config);
     }
@@ -271,16 +244,12 @@ const TransformationForm = ({
           />
         )}
 
-        {(type === 'remove' || type === 'recolor' || type === 'imageToVideo') && (
+        {(type === 'remove' || type === 'recolor') && (
           <div className="prompt-field">
             <CustomField
               control={form.control}
               name="prompt"
-              formLabel={
-                type === 'remove' ? 'Object to remove' :
-                type === 'recolor' ? 'Object to recolor' :
-                'Prompt for video'
-              }
+              formLabel={type === 'remove' ? 'Object to remove' : 'Object to recolor'}
               className="w-full"
               render={({ field }) => (
                 <Input
